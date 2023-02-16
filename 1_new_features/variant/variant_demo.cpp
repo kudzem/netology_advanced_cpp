@@ -1,5 +1,6 @@
 #include <iostream>
 #include <variant>
+#include <optional>
 #include <vector>
 #include <ctime>
 #include <algorithm>
@@ -26,8 +27,16 @@ std::variant<int, std::string, std::vector<int>> get_variant() {
 	return result;
 }
 
+std::optional<int> get_num_or_null(bool set) {
+	if (set) return 10;
+	return std::nullopt;
+}
+
 int main()
 {
+	auto opt_value = get_num_or_null(false);
+	std::cout << opt_value.value_or(0) << std::endl;
+
 	auto my_var = get_variant();
 
 	if (std::holds_alternative<int>(my_var)) {
