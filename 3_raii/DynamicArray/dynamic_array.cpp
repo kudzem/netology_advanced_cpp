@@ -32,7 +32,7 @@ private:
 public:
     DynamicArray() : _data(nullptr), _first(nullptr), _size(0), _capacity(0) {}
 
-    DynamicArray(int* data, size_t size, size_t capacity = 0) {
+    DynamicArray(const int* data, size_t size, size_t capacity = 0) {
         if (capacity == 0 && size > 0) {
             _capacity = pow(2, int(log2(size) + 1));
         }
@@ -44,6 +44,24 @@ public:
         _size = std::min(_capacity, size);
         memcpy(_data, data, _size * sizeof(int));
     }
+
+    DynamicArray(const DynamicArray& other)
+    {
+        _capacity = other._capacity;
+        _size = other._size;
+        _data = new int[_capacity];
+        memcpy(_data, other._data, _size * sizeof(int));
+        _first = _data;
+    }
+    DynamicArray& operator=(const DynamicArray& other) {
+        DynamicArray tmp(other);
+        std::swap(tmp._data, _data);
+        std::swap(tmp._first, _first);
+        std::swap(tmp._size, _size);
+        std::swap(tmp._capacity, _capacity);
+        return *this;
+    }
+
 
     DynamicArray(size_t size) : DynamicArray() {
         if (size > 0) {
@@ -153,6 +171,12 @@ int main() {
     DynamicArray da(3);
     da[1] = 3;
     std::cout << da;
+
+    DynamicArray dada(da);
+    dada[0] = 5;
+    dada = da;
+    std::cout << dada;
+
 
     int a[] = { 1,2,3,4,5,6,7,8,9,10 };
     DynamicArray da2(a, 10);
