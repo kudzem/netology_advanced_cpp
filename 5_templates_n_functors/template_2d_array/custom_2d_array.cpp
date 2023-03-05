@@ -7,11 +7,18 @@ class Table {
 public:
 	Table(size_t rows, size_t cols) : _rows(rows), _cols(cols), data(nullptr)
 	{
+		if (!rows || !cols) {
+			throw(std::invalid_argument("Zero Table parameter"));
+		}
+
 		data = new T*[rows];
 		for (size_t r = 0; r < _rows; ++r) {
 			data[r] = new T[cols];
 		}
 	}
+
+	Table(const Table&) = delete;
+	Table& operator=(const Table&) = delete;
 
 	~Table() {
 		if (!data) return;
