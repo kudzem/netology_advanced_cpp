@@ -4,45 +4,45 @@
 #include <numeric>
 #include <string>
 
-template <class C, class T>
-class Summator {
+template <class C, class T, int N>
+class CountMultiplesOf {
+	T _sum;
+	size_t _quantity;
 public:
-	T operator() (const C& data) {
-		return std::accumulate(data.begin(), data.end(), 0);
+	CountMultiplesOf(): _sum(0), _quantity(0) {}
+
+	void operator() (const C & data) {
+		std::for_each(data.begin(), data.end(),
+			          [this](const auto& item) 
+			          { if (item % N == 0) 
+		                { _sum += item; ++_quantity; }; 
+			          });
 	}
+
+	T get_sum() const { return _sum; }
+	size_t get_count() const { return _quantity; }
 };
 
-template <class C>
-class Summator<C, std::string> {
-public:
-	std::string operator() (const C& data) {
-		std::string str_sum;
-		std::for_each(data.begin(), data.end(), [&str_sum](auto str) { str_sum += str + " "; });
-		return str_sum;
-	}
-};
+typedef CountMultiplesOf<std::vector<int>, double, 3> CountMultiplesOf3;
+typedef CountMultiplesOf<std::vector<int>, double, 5> CountMultiplesOf5;
 
-template <class C>
-class Counter {
-public:
-	size_t operator() (const C& data) {
-		return data.size();
-	}
-};
-
-int main() {
-  {
-	Summator<std::vector<int>, double> get_sum;
+int main() 
+{
+	CountMultiplesOf3 Mof3;
 	std::vector v{ 1,2,3,4,5 };
-	std::cout << "Sum = " << get_sum(v) << std::endl;
+	std::vector v2{ 11,12,13,14,15 };
+	Mof3(v);
+	Mof3(v2);
 
-	Counter<std::vector<int>> get_count;
-	std::cout << "Count = " << get_count(v) << std::endl;
-  }
+	std::cout << "Sum = " << Mof3.get_sum() << std::endl;
+	std::cout << "Count = " << Mof3.get_count() << std::endl;
 
-  {
-	Summator<std::vector<std::string>, std::string> get_sum;
-	std::vector<std::string> v{ "Hello", ",", "World" , "!!!"};
-	std::cout << get_sum(v);
-  }
+	CountMultiplesOf5 Mof5;
+	Mof5(v);
+	Mof5(v2);
+
+	std::cout << "Sum = " << Mof5.get_sum() << std::endl;
+	std::cout << "Count = " << Mof5.get_count() << std::endl;
+
+	return 0;
 }
