@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10])
+project(cpp_catch2_demo)
+find_package(Catch2 3 REQUIRED)
+include_directories("./Catch2/src/catch2")
+add_executable(tests "demo_catch2.cpp" "linked_list.h")
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
