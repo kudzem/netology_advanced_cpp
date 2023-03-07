@@ -89,7 +89,11 @@ public:
     }
 
     T& operator[] (size_t idx) {
-        if (idx > _size) {
+        return _data[idx];
+    }
+
+    T& at(size_t idx) {
+        if (idx >= _size) {
             throw std::out_of_range("Idx out of array range");
         }
         return _data[idx];

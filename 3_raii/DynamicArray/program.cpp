@@ -39,6 +39,7 @@ int main() {
     int a[] = { 1,2,3,4,5,6,7,8,9,10 };
     DynamicArray<int> da2(a, 10);
     std::cout << da2;
+    da2.at(9);
 
     DynamicArray<int> da3(a, 10, 8);
     std::cout << da3;
