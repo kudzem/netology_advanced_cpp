@@ -5,17 +5,19 @@
 #include <array>
 #include <vector>
 
-template <typename C, typename T>
+template <typename T>
 class RemoveDuplicates {
-	std::set<T, std::greater<T>> uniq_numbers;
+	std::set<T, std::greater<T>> uniq_entries;
 public:
 
-	RemoveDuplicates(const C& source) {
-		for_each(source.cbegin(), source.cend(), [this](auto item) { uniq_numbers.insert(item); });
+	RemoveDuplicates() {}
+
+	void operator()(T new_entry) {
+		uniq_entries.insert(new_entry);
 	}
 
 	void Print() const {
-		for (const auto& item : uniq_numbers) {
+		for (const auto& item : uniq_entries) {
 			std::cout << item << std::endl;
 		}
 	}
@@ -24,11 +26,14 @@ public:
 
 int main()
 {
-	RemoveDuplicates <std::string, char> rd("Hello, World!");
+	RemoveDuplicates <char> rd;
+	std::string s("Hello, World!");
+	rd = for_each(s.cbegin(), s.cend(), rd);
 	rd.Print();
 
+	RemoveDuplicates <int> rd2;
 	std::array<int, 5> input_data = { 1, -2, 3, -4, 5 };
-	RemoveDuplicates <std::array<int,5>, int> rd2(input_data);
+	rd2 = for_each(input_data.cbegin(), input_data.cend(), rd2);
 	rd2.Print();
 
 	size_t user_data_size = 0;
@@ -45,7 +50,8 @@ int main()
 		--user_data_size;
 	}
 
-	RemoveDuplicates <std::vector<int>, int> rd3(user_data);
+	RemoveDuplicates <int> rd3;
+	rd3 = for_each(user_data.cbegin(), user_data.cend(), rd3);
 	std::cout << "Your data unique items:" << std::endl;
 	rd3.Print();
 
