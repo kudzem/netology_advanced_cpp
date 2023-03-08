@@ -9,7 +9,6 @@ template <class T>
 class DynamicArray {
 private:
     T* _data;
-    T* _first;
     size_t _size;
     size_t _capacity;
 
@@ -33,7 +32,7 @@ private:
         }
     }
 public:
-    DynamicArray() : _data(nullptr), _first(nullptr), _size(0), _capacity(0) {}
+    DynamicArray() : _data(nullptr), _size(0), _capacity(0) {}
 
     DynamicArray(const T* data, size_t size, size_t capacity = 0) {
         if (capacity == 0 && size > 0) {
@@ -43,7 +42,6 @@ public:
             _capacity = capacity;
         }
         _data = new T[_capacity];
-        _first = _data;
         _size = std::min(_capacity, size);
         memcpy(_data, data, _size * sizeof(T));
     }
@@ -54,12 +52,10 @@ public:
         _size = other._size;
         _data = new T[_capacity];
         memcpy(_data, other._data, _size * sizeof(T));
-        _first = _data;
     }
     DynamicArray& operator=(const DynamicArray& other) {
         DynamicArray tmp(other);
         std::swap(tmp._data, _data);
-        std::swap(tmp._first, _first);
         std::swap(tmp._size, _size);
         std::swap(tmp._capacity, _capacity);
         return *this;
@@ -70,7 +66,6 @@ public:
         if (size > 0) {
             _capacity = static_cast<size_t>(pow(2, int(log2(size) + 1)));
             _data = new T[_capacity];
-            _first = _data;
             _size = std::min(_capacity, size);
             std::memset(_data, 0, _size * sizeof(T));
         }
@@ -85,7 +80,6 @@ public:
         if (_new_data) {
             delete[] _new_data;
         }
-        _first = _data;
     }
 
     T& operator[] (size_t idx) {
