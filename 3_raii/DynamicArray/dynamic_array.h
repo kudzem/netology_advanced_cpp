@@ -13,10 +13,8 @@ private:
     size_t _capacity;
 
     void release_memory() {
-        if (_data) {
-            delete[] _data;
-            _data = nullptr;
-        }
+        delete[] _data;
+        _data = nullptr;
     }
 
     void extend()
@@ -77,9 +75,7 @@ public:
         _size = std::min(_capacity, _size);
         std::memcpy(_new_data, _data, _size * sizeof(T));
         std::swap(_data, _new_data);
-        if (_new_data) {
-            delete[] _new_data;
-        }
+        delete[] _new_data;
     }
 
     T& operator[] (size_t idx) {
@@ -116,9 +112,7 @@ public:
         T* _new_data = new T[_size];
         std::memcpy(_new_data, _data + 1, _size * sizeof(T));
         std::swap(_data, _new_data);
-        if (_new_data) {
-            delete[] _new_data;
-        }
+        delete[] _new_data;
 
         if (2 * _size <= _capacity) {
             resize(_size);
