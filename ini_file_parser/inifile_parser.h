@@ -12,6 +12,21 @@
 
 namespace netology_course_work
 {
+    class FileReadingException : std::exception {
+
+        std::string _filename;
+        std::string _error;
+    public:
+        FileReadingException(const std::string& filename, 
+                             const std::string& error) : _filename(filename), 
+                                                         _error(error) {}
+
+
+        std::string what() {
+            return "Can't open config file " + _filename + ": " + _error;
+        }
+    };
+
     bool is_integer(const std::string& s) {
         return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
     }
@@ -24,15 +39,13 @@ namespace netology_course_work
         std::map<std::string, std::map<std::string, std::variant<int, double, std::string>>> config;
 
         void
-            load_file(const std::string& filename,
-                std::vector<std::string>& content)
+        load_file(const std::string& filename,
+                  std::vector<std::string>& content)
         {
             std::ifstream fin(filename);
 
             if (!fin.is_open()) {
-                std::cout << "Can't open config file " << filename << std::endl;
-                std::cerr << "Error: " << strerror(errno);
-                return;
+                throw FileReadingException(filename, strerror(errno));
             }
 
             for (std::string line; std::getline(fin, line); )
