@@ -1,164 +1,135 @@
 #pragma once
 
-#include <iostream>
-#include <cstring>
 #include <string>
-#include <cmath>
+#include <map>
+#include <vector>
+#include <fstream>
+#include <iostream>
+#include <iterator>
+#include <regex>
+#include <variant>
+#include <optional>
 
-template <class T>
-class DynamicArray {
-private:
-    T* _data;
-    size_t _size;
-    size_t _capacity;
+bool is_integer(const std::string& s) {
+    return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
+}
 
-    void release_memory() {
-        delete[] _data;
-        _data = nullptr;
-    }
+bool is_number(const std::string& s) {
+    return std::regex_match(s, std::regex(("((\\+|-)?[[:digit:]]+)(\\.(([[:digit:]]+)?))?")));
+}
 
-    void extend()
+class ini_parser {
+    std::map<std::string, std::map<std::string, std::variant<int, double, std::string>>> config;
+
+    void
+        load_file(const std::string& filename,
+            std::vector<std::string>& content)
     {
-        if (_size == 0) {
-            resize(1);
+        std::ifstream fin(filename);
+
+        if (!fin.is_open()) {
+            std::cout << "Can't open config file " << filename << std::endl;
+            std::cerr << "Error: " << strerror(errno);
+            return;
         }
-        else if (_size == 1) {
-            resize(2);
+
+        for (std::string line; std::getline(fin, line); )
+        {
+            content.push_back(line);
         }
-        else {
-            resize(static_cast<size_t>(pow(2, int(log2(_size) + 1))));
+
+        fin.close();
+    }
+
+    void clean_spaces_in_line(std::string& line) {
+        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+    }
+
+    void remove_comments_in_line(std::string& line) {
+        auto comment_start_pos = std::find(line.cbegin(), line.cend(), ';');
+        if (comment_start_pos != line.cend()) {
+            line.erase(comment_start_pos, line.end());
         }
     }
+
+    void find_section(std::string& line, std::string& current_section) {
+        if (line[0] == '[' && *line.rbegin() == ']') {
+            current_section = std::string(line.cbegin() + 1, line.cend() - 1);
+            if (config.find(current_section) == config.end()) {
+                config[current_section] = {};
+            }
+            std::cout << "Add section " << current_section << std::endl;
+        }
+    }
+
+    void find_parameter(std::string& line, const std::string& current_section) {
+        auto equal_pos = std::find(line.cbegin(), line.cend(), '=');
+        if (equal_pos != line.cend()) {
+            std::string prm_name(line.cbegin(), equal_pos);
+            std::string prm_value(line, std::distance(line.cbegin(), equal_pos + 1));
+
+            config[current_section][prm_name] = prm_value;
+            std::cout << "Add prm=" << prm_name << ", val=" << prm_value << std::endl;
+
+            if (is_integer(prm_value)) {
+                std::cout << "Integer" << std::endl;
+                config[current_section][prm_name] = std::stoi(prm_value);
+            }
+            else if (is_number(prm_value)) {
+                std::cout << "Double" << std::endl;
+                config[current_section][prm_name] = std::stod(prm_value);
+            }
+            else {
+                std::cout << "String" << std::endl;
+                config[current_section][prm_name] = prm_value;
+            }
+        }
+
+    }
+
+    void
+        analyze_lines(std::vector<std::string>& content)
+    {
+        std::string current_section = "global";
+        config[current_section] = {};
+
+        for (auto& line : content) {
+
+            clean_spaces_in_line(line);
+            remove_comments_in_line(line);
+
+            if (line.empty()) { continue; }
+
+            find_section(line, current_section);
+
+            find_parameter(line, current_section);
+        }
+    }
+
 public:
-    DynamicArray() : _data(nullptr), _size(0), _capacity(0) {}
+    template <typename T>
+    std::optional<T>
+        get_value(std::string section_prm) {
+        auto dot_pos = std::find(section_prm.cbegin(), section_prm.cend(), '.');
+        if (dot_pos != section_prm.cend()) {
 
-    DynamicArray(const T* data, size_t size, size_t capacity = 0) {
-        if (capacity == 0 && size > 0) {
-            _capacity = static_cast<size_t>(pow(2, int(log2(size) + 1)));
+            std::string section_name(section_prm.cbegin(), dot_pos);
+            std::string prm_name(section_prm, std::distance(section_prm.cbegin(), dot_pos + 1));
+
+            auto section = config.find(section_name);
+            if (section != config.end()) {
+                auto prm = section->second.find(prm_name);
+                if (prm != section->second.end()) {
+                    return std::get<T>(prm->second);
+                }
+            }
         }
-        else {
-            _capacity = capacity;
-        }
-        _data = new T[_capacity];
-        _size = std::min(_capacity, size);
-        memcpy(_data, data, _size * sizeof(T));
+        return std::nullopt;
     }
 
-    DynamicArray(const DynamicArray& other)
-    {
-        _capacity = other._capacity;
-        _size = other._size;
-        _data = new T[_capacity];
-        memcpy(_data, other._data, _size * sizeof(T));
-    }
-    DynamicArray& operator=(const DynamicArray& other) {
-        DynamicArray tmp(other);
-        std::swap(tmp._data, _data);
-        std::swap(tmp._size, _size);
-        std::swap(tmp._capacity, _capacity);
-        return *this;
-    }
-
-
-    DynamicArray(size_t size) : DynamicArray() {
-        if (size > 0) {
-            _capacity = static_cast<size_t>(pow(2, int(log2(size) + 1)));
-            _data = new T[_capacity];
-            _size = std::min(_capacity, size);
-            std::memset(_data, 0, _size * sizeof(T));
-        }
-    }
-
-    void resize(size_t new_capacity) {
-        T* _new_data = new T[new_capacity];
-        _capacity = new_capacity;
-        _size = std::min(_capacity, _size);
-        std::memcpy(_new_data, _data, _size * sizeof(T));
-        std::swap(_data, _new_data);
-        delete[] _new_data;
-    }
-
-    T& operator[] (size_t idx) {
-        return _data[idx];
-    }
-
-    T& at(size_t idx) {
-        if (idx >= _size) {
-            throw std::out_of_range("Idx out of array range");
-        }
-        return _data[idx];
-    }
-
-    void push_back(T item) {
-        if (_size == _capacity) {
-            extend();
-        }
-        _data[_size++] = item;
-    }
-
-    void pop_back() {
-        if (_size == 0) return;
-        --_size;
-
-        if (2 * _size <= _capacity) {
-            resize(_size);
-        }
-    }
-
-    void pop_front() {
-        if (_size == 0) return;
-
-        --_size;
-        T* _new_data = new T[_size];
-        std::memcpy(_new_data, _data + 1, _size * sizeof(T));
-        std::swap(_data, _new_data);
-        delete[] _new_data;
-
-        if (2 * _size <= _capacity) {
-            resize(_size);
-        }
-    }
-
-    void clear() {
-        release_memory();
-        _size = 0;
-        _capacity = 0;
-    }
-
-    size_t get_size() const {
-        return _size;
-    }
-
-    size_t get_capacity() const {
-        return _capacity;
-    }
-
-    std::string print() const
-    {
-        std::string res;
-        for (int i = 0; i < _capacity; ++i) {
-            res += ((i < _size) ? std::to_string(_data[i]) : "_") + " ";
-        }
-        return res;
-    }
-
-    virtual
-        ~DynamicArray() {
-        release_memory();
+    ini_parser(const std::string& filename) {
+        std::vector<std::string> content;
+        load_file(filename, content);
+        analyze_lines(content);
     }
 };
-
-template <class T>
-std::ostream&
-operator<<(std::ostream& os, const DynamicArray<T>& obj)
-{
-    os << "Array params:" << std::endl
-        << "size=" << obj.get_size() << ", capacity=" << obj.get_capacity() << std::endl;
-
-    if (obj.get_capacity()) {
-        os << "Array content:" << std::endl
-            << obj.print() << std::endl;
-    }
-    os << std::endl;
-    return os;
-}
