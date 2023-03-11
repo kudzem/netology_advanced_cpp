@@ -22,6 +22,11 @@ int main() {
         if (value3) {
             std::cout << *value3;
         }
+
+        auto value4 = parser.get_value<bool>("core.ignorecase");
+        if (value4) {
+            std::cout << std::boolalpha << *value4;
+        }
     }
     catch (FileReadingException e) {
         std::cout << e.what() << std::endl;

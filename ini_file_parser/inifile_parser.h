@@ -36,7 +36,7 @@ namespace netology_course_work
     }
 
     class ini_parser {
-        std::map<std::string, std::map<std::string, std::variant<int, double, std::string>>> config;
+        std::map<std::string, std::map<std::string, std::variant<int, double, std::string, bool>>> config;
 
         void
         load_file(const std::string& filename,
@@ -86,16 +86,19 @@ namespace netology_course_work
                 config[current_section][prm_name] = prm_value;
                 std::cout << "Add prm=" << prm_name << ", val=" << prm_value << std::endl;
 
-                if (is_integer(prm_value)) {
-                    std::cout << "Integer" << std::endl;
+                if (prm_value == "true") {
+                    config[current_section][prm_name] = true;
+                }
+                else if (prm_value == "false") {
+                    config[current_section][prm_name] = false;
+                }
+                else if (is_integer(prm_value)) {
                     config[current_section][prm_name] = std::stoi(prm_value);
                 }
                 else if (is_number(prm_value)) {
-                    std::cout << "Double" << std::endl;
                     config[current_section][prm_name] = std::stod(prm_value);
                 }
                 else {
-                    std::cout << "String" << std::endl;
                     config[current_section][prm_name] = prm_value;
                 }
             }
