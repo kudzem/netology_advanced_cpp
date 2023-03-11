@@ -1,5 +1,7 @@
 #include "inifile_parser.h"
 
+using namespace netology_course_work;
+
 int main() {
 
     setlocale(LC_ALL, "Russian");
