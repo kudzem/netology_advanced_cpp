@@ -21,7 +21,6 @@ namespace netology_course_work
                              const std::string& error) : _filename(filename), 
                                                          _error(error) {}
 
-
         std::string what() {
             return "Can't open config file " + _filename + ": " + _error;
         }
@@ -35,12 +34,29 @@ namespace netology_course_work
         return std::regex_match(s, std::regex(("((\\+|-)?[[:digit:]]+)(\\.(([[:digit:]]+)?))?")));
     }
 
+    class inifile_line_formatter {
+    public:
+
+        static
+        void clean_spaces_in_line(std::string& line) {
+            line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+        }
+
+        static
+        void remove_comments_in_line(std::string& line) {
+            auto comment_start_pos = std::find(line.cbegin(), line.cend(), ';');
+            if (comment_start_pos != line.cend()) {
+                line.erase(comment_start_pos, line.end());
+            }
+        }
+    };
+
     class ini_parser {
         std::map<std::string, std::map<std::string, std::variant<int, double, std::string, bool>>> config;
 
         void
-        load_file(const std::string& filename,
-                  std::vector<std::string>& content)
+        read_config_file(const std::string& filename,
+                         std::vector<std::string>& config_lines) const
         {
             std::ifstream fin(filename);
 
@@ -48,86 +64,89 @@ namespace netology_course_work
                 throw FileReadingException(filename, strerror(errno));
             }
 
-            for (std::string line; std::getline(fin, line); )
-            {
-                content.push_back(line);
+            for (std::string line; std::getline(fin, line); ) {
+                config_lines.push_back(line);
             }
 
             fin.close();
         }
 
-        void clean_spaces_in_line(std::string& line) {
-            line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
-        }
-
-        void remove_comments_in_line(std::string& line) {
-            auto comment_start_pos = std::find(line.cbegin(), line.cend(), ';');
-            if (comment_start_pos != line.cend()) {
-                line.erase(comment_start_pos, line.end());
-            }
-        }
-
-        void find_section(std::string& line, std::string& current_section) {
+        bool find_and_save_section(std::string& line, std::string& current_section) {
             if (line[0] == '[' && *line.rbegin() == ']') {
                 current_section = std::string(line.cbegin() + 1, line.cend() - 1);
                 if (config.find(current_section) == config.end()) {
                     config[current_section] = {};
                 }
-                std::cout << "Add section " << current_section << std::endl;
+                return true;
             }
+            return false;
         }
 
-        void find_parameter(std::string& line, const std::string& current_section) {
+        std::optional<std::pair< std::string, std::string>>
+        find_parameter(std::string& line, const std::string& current_section) {
             auto equal_pos = std::find(line.cbegin(), line.cend(), '=');
             if (equal_pos != line.cend()) {
                 std::string prm_name(line.cbegin(), equal_pos);
                 std::string prm_value(line, std::distance(line.cbegin(), equal_pos + 1));
 
-                config[current_section][prm_name] = prm_value;
-                std::cout << "Add prm=" << prm_name << ", val=" << prm_value << std::endl;
-
-                if (prm_value == "true") {
-                    config[current_section][prm_name] = true;
-                }
-                else if (prm_value == "false") {
-                    config[current_section][prm_name] = false;
-                }
-                else if (is_integer(prm_value)) {
-                    config[current_section][prm_name] = std::stoi(prm_value);
-                }
-                else if (is_number(prm_value)) {
-                    config[current_section][prm_name] = std::stod(prm_value);
-                }
-                else {
-                    config[current_section][prm_name] = prm_value;
-                }
+                return make_pair(prm_name, prm_value);
             }
 
+            return std::nullopt;
         }
 
         void
-            analyze_lines(std::vector<std::string>& content)
+        save_parameter(std::pair<std::string, std::string>& prm, const std::string& current_section) {
+
+            std::string prm_name(prm.first);
+            std::string prm_value(prm.second);
+
+            if (prm.second == "true") {
+                config[current_section][prm_name] = true;
+            }
+            else if (prm_value == "false") {
+                config[current_section][prm_name] = false;
+            }
+            else if (is_integer(prm_value)) {
+                config[current_section][prm_name] = std::stoi(prm_value);
+            }
+            else if (is_number(prm_value)) {
+                config[current_section][prm_name] = std::stod(prm_value);
+            }
+            else {
+                config[current_section][prm_name] = prm_value;
+            }
+        }
+
+        void
+        parse_config(std::vector<std::string>& config_lines)
         {
             std::string current_section = "global";
             config[current_section] = {};
 
-            for (auto& line : content) {
+            for (auto& line : config_lines) {
 
-                clean_spaces_in_line(line);
-                remove_comments_in_line(line);
+                inifile_line_formatter::clean_spaces_in_line(line);
+                inifile_line_formatter::remove_comments_in_line(line);
 
-                if (line.empty()) { continue; }
+                if (line.empty()) { 
+                    continue;
+                }
+                
+                auto prm = find_parameter(line, current_section);
+                if (prm) {
+                    save_parameter(*prm, current_section);
+                    continue;
+                }
 
-                find_section(line, current_section);
-
-                find_parameter(line, current_section);
+                find_and_save_section(line, current_section);
             }
         }
 
     public:
         template <typename T>
         std::optional<T>
-            get_value(std::string section_prm) {
+            get_value(std::string section_prm) const {
             auto dot_pos = std::find(section_prm.cbegin(), section_prm.cend(), '.');
             if (dot_pos != section_prm.cend()) {
 
@@ -146,9 +165,9 @@ namespace netology_course_work
         }
 
         ini_parser(const std::string& filename) {
-            std::vector<std::string> content;
-            load_file(filename, content);
-            analyze_lines(content);
+            std::vector<std::string> config_lines;
+            read_config_file(filename, config_lines);
+            parse_config(config_lines);
         }
     };
 

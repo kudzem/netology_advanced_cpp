@@ -11,21 +11,21 @@ int main() {
 
         auto value = parser.get_value<int>("Section2.var1");
         if (value) {
-            std::cout << *value;
+            std::cout << *value << std::endl;
         }
 
         auto value2 = parser.get_value<double>("Section1.var1");
         if (value2) {
-            std::cout << *value2;
+            std::cout << *value2 << std::endl;
         }
         auto value3 = parser.get_value<std::string>("Section1.var3");
         if (value3) {
-            std::cout << *value3;
+            std::cout << *value3 << std::endl;
         }
 
         auto value4 = parser.get_value<bool>("core.ignorecase");
         if (value4) {
-            std::cout << std::boolalpha << *value4;
+            std::cout << std::boolalpha << *value4 << std::endl;
         }
     }
     catch (FileReadingException e) {
