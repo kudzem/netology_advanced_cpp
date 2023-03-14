@@ -27,11 +27,20 @@ int main() {
         if (value4) {
             std::cout << std::boolalpha << *value4 << std::endl;
         }
+
+        auto value5 = parser.get_value<bool>("Section4.Mode");
+        if (value5) {
+            std::cout << *value5 << std::endl;
+        }
+
     }
     catch (FileReadingException e) {
         std::cout << e.what() << std::endl;
     }
-    catch (...) {
-        std::cout << "Unknown exception" << std::endl;
+    catch (NoValueException e) {
+        std::cout << e.what() << std::endl;
     }
+    //catch (...) {
+    //    std::cout << "Unknown exception" << std::endl;
+    //}
 }

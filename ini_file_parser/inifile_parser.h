@@ -26,6 +26,20 @@ namespace netology_course_work
         }
     };
 
+    class NoValueException : std::exception {
+
+        std::string _section;
+        std::string _param;
+    public:
+        NoValueException(const std::string& section,
+            const std::string& param) : _section(section),
+            _param(param) {}
+
+        std::string what() {
+            return "Param " + _section + "." + _param + " has no value";
+        }
+    };
+
     bool is_integer(const std::string& s) {
         return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
     }
@@ -157,6 +171,12 @@ namespace netology_course_work
                 if (section != config.end()) {
                     auto prm = section->second.find(prm_name);
                     if (prm != section->second.end()) {
+
+                        auto value = std::get_if<std::string>(&prm->second);
+                        if (value && *value == "") {
+                            throw NoValueException(section_name, prm_name);
+                        }
+
                         return std::get<T>(prm->second);
                     }
                 }
