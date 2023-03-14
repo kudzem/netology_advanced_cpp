@@ -63,6 +63,25 @@ namespace netology_course_work
                 line.erase(comment_start_pos, line.end());
             }
         }
+
+        static inline void ltrim(std::string& s) {
+            s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+                return !std::isspace(ch);
+                }));
+        }
+
+        // trim from end (in place)
+        static inline void rtrim(std::string& s) {
+            s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+                return !std::isspace(ch);
+                }).base(), s.end());
+        }
+
+        // trim from both ends (in place)
+        static inline void trim(std::string& s) {
+            rtrim(s);
+            ltrim(s);
+        }
     };
 
     class ini_parser {
@@ -88,7 +107,11 @@ namespace netology_course_work
         bool find_and_save_section(std::string& line, std::string& current_section) {
             if (line[0] == '[' && *line.rbegin() == ']') {
                 current_section = std::string(line.cbegin() + 1, line.cend() - 1);
+
+                inifile_line_formatter::clean_spaces_in_line(current_section);
                 if (config.find(current_section) == config.end()) {
+
+                    //std::cout << "Section=`" << current_section << "`" << std::endl;
                     config[current_section] = {};
                 }
                 return true;
@@ -101,7 +124,11 @@ namespace netology_course_work
             auto equal_pos = std::find(line.cbegin(), line.cend(), '=');
             if (equal_pos != line.cend()) {
                 std::string prm_name(line.cbegin(), equal_pos);
+                inifile_line_formatter::clean_spaces_in_line(prm_name);
+
                 std::string prm_value(line, std::distance(line.cbegin(), equal_pos + 1));
+
+                inifile_line_formatter::trim(prm_value);
 
                 return make_pair(prm_name, prm_value);
             }
@@ -114,6 +141,8 @@ namespace netology_course_work
 
             std::string prm_name(prm.first);
             std::string prm_value(prm.second);
+
+            //std::cout << "Prm=`" << prm_name <<  "`, value=`" << prm_value << "`" << std::endl;
 
             if (prm.second == "true") {
                 config[current_section][prm_name] = true;
@@ -140,7 +169,6 @@ namespace netology_course_work
 
             for (auto& line : config_lines) {
 
-                inifile_line_formatter::clean_spaces_in_line(line);
                 inifile_line_formatter::remove_comments_in_line(line);
 
                 if (line.empty()) { 

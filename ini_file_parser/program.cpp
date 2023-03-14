@@ -14,10 +14,16 @@ int main() {
             std::cout << *value << std::endl;
         }
 
+        auto value6 = parser.get_value<std::string>("Section1.var2");
+        if (value6) {
+            std::cout << *value6 << std::endl;
+        }
+
         auto value2 = parser.get_value<double>("Section1.var1");
         if (value2) {
             std::cout << *value2 << std::endl;
         }
+
         auto value3 = parser.get_value<std::string>("Section1.var3");
         if (value3) {
             std::cout << *value3 << std::endl;
@@ -40,7 +46,7 @@ int main() {
     catch (NoValueException e) {
         std::cout << e.what() << std::endl;
     }
-    //catch (...) {
-    //    std::cout << "Unknown exception" << std::endl;
-    //}
+    catch (...) {
+        std::cout << "Unknown exception" << std::endl;
+    }
 }
