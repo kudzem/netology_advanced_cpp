@@ -2,6 +2,17 @@
 #include <vector>
 #include <memory>
 
+class A {
+
+public:
+    A(A&& other) {
+        std::cout << "Move constructor" << std::endl;
+    }
+
+    A(const A& other) = default;
+
+    A(){}
+};
 
 template <typename T, typename U=T>
 void
@@ -26,6 +37,16 @@ int main()
     for (auto& item : two) {
         std::cout << item << std::endl;
     }
+
+    //-------------------
+    std::vector <A> oneA = { {}, {} };
+    std::vector <A> twoA;
+
+    move_vectors(twoA, oneA);
+
+    std::cout << twoA.size() << std::endl;
+
+
 
     return 0;
 }
